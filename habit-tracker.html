@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ultimate Habit Tracker</title>
+<style>
+:root{--bg:#f6f8fa;--card:#fff;--ink:#1f2a44;--mute:#6b7585;--line:#dde3ea;--acc:#2a9d8f;--accl:#d8f0ec;--off:#eef1f4;--warn:#e76f51;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#11161d;--card:#1a212b;--ink:#e8edf3;--mute:#8d99a8;--line:#2b3441;--acc:#3dbcad;--accl:#1f3b38;--off:#222a35;--warn:#f08a6f}}
+:root[data-theme="dark"]{--bg:#11161d;--card:#1a212b;--ink:#e8edf3;--mute:#8d99a8;--line:#2b3441;--acc:#3dbcad;--accl:#1f3b38;--off:#222a35;--warn:#f08a6f}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.wrap{max-width:1000px;margin:0 auto;padding:14px}
+h1{font-size:20px;margin:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mo{display:flex;align-items:center;gap:6px}
+.mo b{min-width:130px;text-align:center;font-size:16px}
+button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+.tabs{display:flex;gap:6px;margin:12px 0}
+.tabs button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
+.scroll{overflow-x:auto}
+table{border-collapse:separate;border-spacing:0;font-size:12px}
+th,td{padding:0;text-align:center}
+th{color:var(--mute);font-weight:600;padding:2px 0}
+th.d{min-width:26px}
+td.n{position:sticky;left:0;background:var(--card);z-index:1;text-align:left;padding-right:6px}
+.n input{width:130px}
+input{font:inherit;color:var(--ink);background:var(--off);border:1px solid var(--line);border-radius:6px;padding:5px 6px}
+input.g{width:44px;text-align:center}
+.c{width:24px;height:24px;margin:1px;border-radius:6px;border:1px solid var(--line);background:var(--off);padding:0;font-size:13px;line-height:1;color:#fff}
+.c.on{background:var(--acc);border-color:var(--acc)}
+.c.today{outline:2px solid var(--warn)}
+.x{border:none;background:none;color:var(--mute);padding:2px 6px}
+.s{font-weight:700;padding:0 6px;white-space:nowrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:12px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.k b{display:block;font-size:22px;color:var(--acc)}
+.k span{font-size:12px;color:var(--mute)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+.card h2{font-size:14px;margin:0 0 8px;color:var(--mute);text-transform:uppercase;letter-spacing:.04em}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--mute);font-size:10px;font-family:inherit}
+.bar{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px}
+.bar i{flex:1;height:10px;background:var(--off);border-radius:5px;overflow:hidden}
+.bar i u{display:block;height:100%;background:var(--acc)}
+.bar span:first-child{width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hint{color:var(--mute);font-size:12px;margin:6px 0 0}
+.hide{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>✅ Habit Tracker</h1>
+    <div class="mo"><button id="prev">‹</button><b id="lbl"></b><button id="next">›</button></div>
+  </div>
+  <div class="tabs"><button id="t1" class="on">Tracker</button><button id="t2">Dashboard</button></div>
+  <div id="v1"></div>
+  <div id="v2" class="hide"></div>
+</div>
+<script>
+(function(){
+var KEY="habit-tracker-v1",MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+var now=new Date(),ym={y:now.getFullYear(),m:now.getMonth()};
+var st=null;
+try{st=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!st||!st.h){st={h:[["Workout",20],["Read 20 pages",25],["Meditate",25],["Journal",20],["Drink 2L water",30]].map(function(a,i){return{id:i+1,n:a[0],g:a[1]}}),c:{},nid:6}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st))}catch(e){}}
+function $(id){return document.getElementById(id)}
+function key(){return ym.y+"-"+(ym.m+1)}
+function dim(){return new Date(ym.y,ym.m+1,0).getDate()}
+function marks(id){var k=key();st.c[k]=st.c[k]||{};st.c[k][id]=st.c[k][id]||[];return st.c[k][id]}
+function done(id){var d=dim();return marks(id).filter(function(x){return x<=d}).length}
+function gp(h){var dn=done(h.id);return h.g>0?Math.min(1,dn/h.g):dn/dim()}
+function pc(x){return Math.round(x*100)+"%"}
+var tab=1;
+function render(){
+  $("lbl").textContent=MN[ym.m]+" "+ym.y;
+  var d=dim(),H=st.h.length,isNow=ym.y===now.getFullYear()&&ym.m===now.getMonth(),td=now.getDate();
+  var s='<div class="card"><div class="scroll"><table><tr><th style="text-align:left;position:sticky;left:0;background:var(--card);z-index:1">Habit</th><th>Goal</th>';
+  for(var i=1;i<=d;i++){var wd=["S","M","T","W","T","F","S"][new Date(ym.y,ym.m,i).getDay()];s+='<th class="d">'+wd+'<br>'+i+'</th>'}
+  s+='<th>Done</th><th>Goal %</th><th></th></tr>';
+  st.h.forEach(function(h){
+    var mk=marks(h.id);
+    s+='<tr><td class="n"><input data-n="'+h.id+'" value="'+h.n.replace(/"/g,"&quot;")+'" placeholder="Habit name"></td>';
+    s+='<td><input class="g" type="number" min="0" max="31" data-g="'+h.id+'" value="'+h.g+'"></td>';
+    for(var i=1;i<=d;i++){var on=mk.indexOf(i)>-1;s+='<td><button class="c'+(on?' on':'')+(isNow&&i===td?' today':'')+'" data-h="'+h.id+'" data-d="'+i+'">'+(on?'✓':'')+'</button></td>'}
+    s+='<td class="s">'+done(h.id)+'</td><td class="s">'+pc(gp(h))+'</td><td><button class="x" data-x="'+h.id+'" title="Delete habit">✕</button></td></tr>';
+  });
+  s+='<tr><th style="text-align:left;position:sticky;left:0;background:var(--card)">Completed</th><th></th>';
+  for(var i=1;i<=d;i++)s+='<th>'+dayTot(i)+'</th>';
+  s+='<th></th><th></th><th></th></tr></table></div>';
+  s+='<p><button id="add">+ Add habit</button></p><p class="hint">Tap a square to tick a day. Goal = days per month you aim for. Your data is saved on this device.</p></div>';
+  $("v1").innerHTML=s;
+  dash();
+}
+function dayTot(i){var n=0;st.h.forEach(function(h){if(marks(h.id).indexOf(i)>-1)n++});return n}
+function dash(){
+  var d=dim(),H=st.h.length,tot=0,days=[];
+  for(var i=1;i<=d;i++){var t=dayTot(i);tot+=t;days.push(H?t/H:0)}
+  var poss=H*d,cp=poss?tot/poss:0;
+  var s='<div class="kpis"><div class="k"><b>'+H+'</b><span>Active habits</span></div><div class="k"><b>'+tot+'</b><span>Total completed</span></div><div class="k"><b>'+poss+'</b><span>Possible</span></div><div class="k"><b>'+pc(cp)+'</b><span>Completion</span></div></div><div class="grid">';
+  // donut
+  var C=2*Math.PI*40,off=C*(1-cp);
+  s+='<div class="card"><h2>Monthly completion</h2><svg viewBox="0 0 120 120" style="max-width:200px;margin:auto"><circle cx="60" cy="60" r="40" fill="none" stroke="var(--off)" stroke-width="16"/><circle cx="60" cy="60" r="40" fill="none" stroke="var(--acc)" stroke-width="16" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 60 60)"/><text x="60" y="66" text-anchor="middle" style="font-size:20px;font-weight:700;fill:var(--ink)">'+pc(cp)+'</text></svg></div>';
+  // weekly
+  var wk=[];for(var w=0;w<5;w++){var a=7*w+1,b=Math.min(7*w+7,d);if(a>d){wk.push(0);continue}var t=0;for(var i=a;i<=b;i++)t+=dayTot(i);var p=H*(b-a+1);wk.push(p?t/p:0)}
+  s+='<div class="card"><h2>Weekly completion</h2><svg viewBox="0 0 300 130">';
+  wk.forEach(function(v,i){var h=v*90,x=20+i*55;s+='<rect x="'+x+'" y="'+(100-h)+'" width="36" height="'+h+'" rx="4" fill="var(--acc)"/><text x="'+(x+18)+'" y="'+(94-h)+'" text-anchor="middle">'+pc(v)+'</text><text x="'+(x+18)+'" y="116" text-anchor="middle">Wk '+(i+1)+'</text>'});
+  s+='</svg></div>';
+  // line
+  var pts=days.map(function(v,i){return(14+i*(280/Math.max(1,d-1))).toFixed(1)+","+(100-v*90).toFixed(1)}).join(" ");
+  s+='<div class="card" style="grid-column:1/-1"><h2>Daily consistency</h2><svg viewBox="0 0 300 125"><line x1="14" y1="100" x2="294" y2="100" stroke="var(--line)"/><line x1="14" y1="10" x2="294" y2="10" stroke="var(--line)" stroke-dasharray="3"/><text x="0" y="13">100</text><text x="2" y="103">0</text><polyline points="'+pts+'" fill="none" stroke="var(--acc)" stroke-width="2"/>';
+  for(var i=1;i<=d;i+=(d>28?5:4))s+='<text x="'+(14+(i-1)*(280/Math.max(1,d-1))).toFixed(1)+'" y="116" text-anchor="middle">'+i+'</text>';
+  s+='</svg></div>';
+  // top
+  var top=st.h.filter(function(h){return h.n}).map(function(h){return{n:h.n,p:gp(h)}}).sort(function(a,b){return b.p-a.p}).slice(0,5);
+  s+='<div class="card" style="grid-column:1/-1"><h2>Top habits (goal %)</h2>';
+  top.forEach(function(t){s+='<div class="bar"><span>'+t.n.replace(/</g,"&lt;")+'</span><i><u style="width:'+t.p*100+'%"></u></i><span style="width:40px;text-align:right">'+pc(t.p)+'</span></div>'});
+  if(!top.length)s+='<p class="hint">Add habits to see your best routines.</p>';
+  s+='</div></div>';
+  $("v2").innerHTML=s;
+}
+function show(n){tab=n;$("v1").className=n===1?"":"hide";$("v2").className=n===2?"":"hide";$("t1").className=n===1?"on":"";$("t2").className=n===2?"on":""}
+$("t1").onclick=function(){show(1)};$("t2").onclick=function(){show(2)};
+$("prev").onclick=function(){ym.m--;if(ym.m<0){ym.m=11;ym.y--}render()};
+$("next").onclick=function(){ym.m++;if(ym.m>11){ym.m=0;ym.y++}render()};
+function find(id){return st.h.filter(function(h){return h.id==id})[0]}
+document.addEventListener("click",function(e){
+  var t=e.target;
+  if(t.dataset.h){var m=marks(+t.dataset.h),dd=+t.dataset.d,i=m.indexOf(dd);if(i>-1)m.splice(i,1);else m.push(dd);save();render()}
+  else if(t.dataset.x){var h=find(t.dataset.x);if(h&&confirm("Delete “"+(h.n||"this habit")+"”?")){st.h=st.h.filter(function(x){return x!==h});save();render()}}
+  else if(t.id==="add"){st.h.push({id:st.nid++,n:"",g:20});save();render()}
+});
+document.addEventListener("change",function(e){
+  var t=e.target,h;
+  if(t.dataset.n){h=find(t.dataset.n);h.n=t.value.trim();save();render()}
+  else if(t.dataset.g){h=find(t.dataset.g);h.g=Math.max(0,Math.min(31,+t.value||0));save();render()}
+});
+render();
+})();
+</script>
+</body>
+</html>
